@@ -1,21 +1,55 @@
 ﻿using HarmonyLib;
-using SkillControl.UI;
+using UnityEngine;
 
 namespace SkillControl.Professions;
 
 public static class Patches
 {
-    [HarmonyPatch(typeof(Player), nameof(Player.RaiseSkill))]
+    private static float originalIncreaseStep;
+    
+    [HarmonyPatch(typeof(Skills), nameof(Skills.RaiseSkill))]
     private static class RaiseSkill_Patch
     {
-        private static void Prefix(Skills.SkillType skill, ref float value)
+        private static void Prefix(Skills.SkillType skillType, ref float factor)
         {
-            if (skill is Skills.SkillType.None) return;
-            if (!JobManager.GetCollectedModifiers().TryGetValue(skill, out float modifier)) return;
-            value *= modifier;
+            if (skillType is Skills.SkillType.None) return;
+            if (!JobManager.GetCollectedModifiers().TryGetValue(skillType, out float modifier)) return;
+            Skills.Skill skill = Player.m_localPlayer.m_skills.GetSkill(skillType);
+            if (SkillControlPlugin._OverrideDefaults.Value is SkillControlPlugin.Toggle.On)
+            {
+                originalIncreaseStep = skill.m_info.m_increseStep;
+                skill.m_info.m_increseStep = modifier;
+            }
+            else
+            {
+                factor *= modifier;
+            }
         }
     }
-    
+
+    [HarmonyPatch(typeof(Skills), nameof(Skills.RaiseSkill))]
+    private static class RaiseSkill_Patch2
+    {
+        private static void Postfix(Skills.SkillType skillType)
+        {
+            if (skillType is Skills.SkillType.None) return;
+            var skill = Player.m_localPlayer.m_skills.GetSkill(skillType);
+            if (SkillControlPlugin._OverrideDefaults.Value is SkillControlPlugin.Toggle.Off) return;
+            skill.m_info.m_increseStep = originalIncreaseStep;
+        }
+    }
+
+    private static float CalculateTotalExperience(float currentLevel)
+    {
+        float totalExperience = 0f;
+        for (float level = 1; level <= currentLevel; level++)
+        {
+            float levelRequirement = Mathf.Pow(Mathf.Floor(level), 1.5f) * 0.5f + 0.5f;
+            totalExperience += levelRequirement;
+        }
+        return totalExperience;
+    }
+
 
     [HarmonyPatch(typeof(Player), nameof(Player.Save))]
     private static class SaveJobData_Patch

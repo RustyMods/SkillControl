@@ -219,6 +219,7 @@ public static class LoadUI
 
     public static void UpdateUI()
     {
+        if (!m_UI) return;
         if (Input.GetKeyDown(KeyCode.Escape)) HideUI();
         if (!Input.GetKeyDown(SkillControlPlugin._UIKey.Value)) return;
         if (IsUIActive()) HideUI();
@@ -370,9 +371,11 @@ public static class LoadUI
 
     private static bool CheckCost()
     {
-        if (Player.m_localPlayer.GetInventory().CountItems(GetCurrency().m_itemData.m_shared.m_name) > SkillControlPlugin._CostToRemove.Value)
+        var currency = GetCurrency().m_itemData.m_shared.m_name;
+        var inventoryCount = Player.m_localPlayer.GetInventory().CountItems(currency);
+        if (inventoryCount >= SkillControlPlugin._CostToRemove.Value)
         {
-            Player.m_localPlayer.GetInventory().RemoveItem(GetCurrency().m_itemData.m_shared.m_name, SkillControlPlugin._CostToRemove.Value);
+            Player.m_localPlayer.GetInventory().RemoveItem(currency, SkillControlPlugin._CostToRemove.Value);
             return true;
         }
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{GetCurrency().m_itemData.m_shared.m_name} $msg_cost_required");

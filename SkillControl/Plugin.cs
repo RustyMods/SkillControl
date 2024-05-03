@@ -19,7 +19,7 @@ namespace SkillControl
     public class SkillControlPlugin : BaseUnityPlugin
     {
         internal const string ModName = "SkillControl";
-        internal const string ModVersion = "1.0.0";
+        internal const string ModVersion = "1.0.1";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -99,6 +99,7 @@ namespace SkillControl
         public static ConfigEntry<Toggle> _ForceJob = null!;
         public static ConfigEntry<Vector2> _UIPosition = null!;
         public static ConfigEntry<Toggle> _RemoveSkillExperience = null!;
+        public static ConfigEntry<Toggle> _OverrideDefaults = null!;
 
         private void InitConfigs()
         {
@@ -114,6 +115,8 @@ namespace SkillControl
             _UIPosition = config("2 - Settings", "Position", Vector2.zero, "Set the position of the UI", false);
             _UIPosition.SettingChanged += LoadUI.OnPositionChange;
             _RemoveSkillExperience = config("2 - Settings", "Lose Skills", Toggle.Off, "If on, removing jobs, also removes skill experiences");
+            _OverrideDefaults = config("2 - Settings", "Override Defaults", Toggle.On,
+                "If on, plugin overrides default skill gain");
         }
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
