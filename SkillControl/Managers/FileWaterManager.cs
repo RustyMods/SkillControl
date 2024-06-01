@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text.RegularExpressions;
 using BepInEx;
 using SkillControl.Professions;
 using YamlDotNet.Serialization;
@@ -53,7 +54,7 @@ public static class FileWaterManager
         var deserializer = new DeserializerBuilder().Build();
         var serial = File.ReadAllText(e.FullPath);
         var data = deserializer.Deserialize<JobData>(serial);
-        JobManager.RegisteredJobs[data.Name] = data;
+        JobManager.RegisteredJobs[Regex.Replace(data.Name, "<.*?>", string.Empty)] = data;
         JobManager.UpdateServerData();
     }
 

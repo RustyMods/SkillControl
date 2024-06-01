@@ -8,6 +8,7 @@ public class JobData
 {
     public string Name = "";
     public string Description = "";
+    public string Image = "";
     public List<SkillData> SkillModifiers = new();
 }
 
@@ -15,5 +16,7 @@ public class JobData
 public class SkillData
 {
     public string SkillName = "";
+    public string DisplayName = "";
     public float Modifier;
+    public string type = "";
 }

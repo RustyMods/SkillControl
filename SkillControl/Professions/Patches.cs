@@ -6,6 +6,7 @@ namespace SkillControl.Professions;
 public static class Patches
 {
     private static float originalIncreaseStep;
+    private static bool m_modified;
     
     [HarmonyPatch(typeof(Skills), nameof(Skills.RaiseSkill))]
     private static class RaiseSkill_Patch
@@ -19,6 +20,7 @@ public static class Patches
             {
                 originalIncreaseStep = skill.m_info.m_increseStep;
                 skill.m_info.m_increseStep = modifier;
+                m_modified = true;
             }
             else
             {
@@ -34,8 +36,12 @@ public static class Patches
         {
             if (skillType is Skills.SkillType.None) return;
             var skill = Player.m_localPlayer.m_skills.GetSkill(skillType);
+            if (!JobManager.GetCollectedModifiers().TryGetValue(skillType, out float modifier)) return;
             if (SkillControlPlugin._OverrideDefaults.Value is SkillControlPlugin.Toggle.Off) return;
+            if (!m_modified) return;
+            if (originalIncreaseStep <= 0f) return;
             skill.m_info.m_increseStep = originalIncreaseStep;
+            m_modified = false;
         }
     }
 
@@ -56,24 +62,14 @@ public static class Patches
     {
         private static void Postfix() => JobManager.SaveJobsToPlayer();
     }
-
-    private static bool initiated;
-
-    [HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
+    
+    [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.LoadPlayerData))]
     private static class LoadJobData_Patch
     {
         private static void Postfix()
         {
-            if (initiated) return;
             JobManager.RetrieveJobsFromPlayer();
-            initiated = true;
         }
-    }
-
-    [HarmonyPatch(typeof(Game), nameof(Game.Logout))]
-    private static class Game_Logout_Patch
-    {
-        private static void Postfix() => initiated = false;
     }
 
     [HarmonyPatch(typeof(ZNet), nameof(ZNet.Start))]

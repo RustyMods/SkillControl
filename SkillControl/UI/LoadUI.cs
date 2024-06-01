@@ -257,7 +257,7 @@ public static class LoadUI
     {
         if (!m_title || !m_icon || !m_description) return;
         m_title.text = Localization.instance.Localize(m_selectedJob.Name);
-        Sprite? background = SpriteManager.TryGetIcon(m_selectedJob.Name);
+        Sprite? background = SpriteManager.TryGetIcon(m_selectedJob.Image.Replace(".png", string.Empty));
         m_icon.sprite = background ? background : m_defaultBackground;
         string tooltip = SkillControlPlugin._RemoveSkillExperience.Value is SkillControlPlugin.Toggle.On ? "<color=red>$text_skill_loss</color>" : "";
         m_description.text = Localization.instance.Localize(m_selectedJob.Description + $"\n{tooltip}");
@@ -268,7 +268,8 @@ public static class LoadUI
         foreach (SkillData? details in m_selectedJob.SkillModifiers)
         {
             if (!JobManager.GetSkillType(details.SkillName, out Skills.SkillType skill)) continue;
-            GameObject element = Object.Instantiate(m_skillElement, details.Modifier < 1f ? m_partLocked : m_partAvailable);
+            
+            GameObject element = Object.Instantiate(m_skillElement, details.type.IsNullOrWhiteSpace() ? details.Modifier < 1f ? m_partLocked : m_partAvailable : details.type is "minus" ? m_partLocked : m_partAvailable);
             Skills.SkillDef definition = Player.m_localPlayer.m_skills.GetSkillDef(skill);
             if (definition != null)
             {
@@ -280,7 +281,7 @@ public static class LoadUI
 
             if (Utils.FindChild(element.transform, "$text_skill_name").TryGetComponent(out Text skillText))
             {
-                skillText.text = Localization.instance.Localize(details.SkillName);
+                skillText.text = Localization.instance.Localize(details.DisplayName.IsNullOrWhiteSpace() ? details.SkillName : details.DisplayName);
             }
 
             if (Utils.FindChild(element.transform, "$text_skill_description").TryGetComponent(out Text descriptionText))

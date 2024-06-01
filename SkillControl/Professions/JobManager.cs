@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using BepInEx;
 using ServerSync;
 using SkillControl.UI;
@@ -30,13 +31,13 @@ public static class JobManager
     public static void RetrieveJobsFromPlayer()
     {
         if (!Player.m_localPlayer) return;
-        m_jobs.Clear();
         if (!Player.m_localPlayer.m_customData.TryGetValue(m_dataKey, out string serial)) return;
+        m_jobs.Clear();
         var deserializer = new DeserializerBuilder().Build();
         var data = deserializer.Deserialize<List<string>>(serial);
-        foreach (var job in data)
+        foreach (string job in data)
         {
-            if (!RegisteredJobs.TryGetValue(job, out JobData jobData)) continue;
+            if (!RegisteredJobs.TryGetValue(Regex.Replace(job, "<.*?>", string.Empty), out JobData jobData)) continue;
             m_jobs.Add(jobData);
         }
         SkillControlPlugin.SkillControlLogger.LogDebug("Retrieved data from player file");
@@ -75,7 +76,7 @@ public static class JobManager
             {
                 var serial = File.ReadAllText(file);
                 var data = deserializer.Deserialize<JobData>(serial);
-                RegisteredJobs[data.Name] = data;
+                RegisteredJobs[Regex.Replace(data.Name, "<.*?>", string.Empty)] = data;
             }
         }
         SkillControlPlugin.SkillControlLogger.LogDebug("Initialized skill controller");
@@ -105,7 +106,7 @@ public static class JobManager
 
     private static void UpdateCurrentJobs()
     {
-        m_jobs = m_jobs.Select(job => RegisteredJobs.Values.FirstOrDefault(x => x.Name == job.Name)).ToList();;
+        m_jobs = m_jobs.Select(job => RegisteredJobs.Values.FirstOrDefault(x => Regex.Replace(x.Name, "<.*?>",string.Empty) == Regex.Replace(job.Name, "<.*?>",string.Empty))).ToList();;
     }
 
     private static void CreateExampleFile()
@@ -161,7 +162,7 @@ public static class JobManager
             string filePath = PluginPaths.folderPath + Path.DirectorySeparatorChar + job.Name + ".yml";
             var serial = serializer.Serialize(job);
             File.WriteAllText(filePath, serial);
-            RegisteredJobs[job.Name] = job;
+            RegisteredJobs[Regex.Replace(job.Name, "<.*?>", string.Empty)] = job;
         }
         
     }
